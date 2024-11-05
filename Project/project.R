@@ -1,0 +1,134 @@
+library(magrittr)
+library(tidyr)
+library(dplyr)
+## install.packages("modeest")
+library(modeest)
+
+
+
+# Functions
+
+eda <- function(df){
+  cnames <- colnames(df)
+  j = 1
+  for (col in df){
+    if (class(col)=="character"){
+      print(cnames[j])
+      print(summary(col))
+      print(paste0("% of NANs: ", sum(is.na(col))/dim(df)[1]))
+      barplot(table(col))
+    } else{
+      df[,j] <- as.double(col)
+      print(cnames[j])
+      print(summary(col))
+      print(paste0("% of NANs: ", sum(is.na(col))/dim(df)[1]))
+      hist(col, main = paste0("Histogram of ", cnames[j]))
+    }
+    print(is.numeric(col))
+    ## temp = readline()
+    j= j+1
+  }
+  return (df);
+}
+
+delete_nans <- function(df){
+  df <- df %>% mutate_if(is.numeric, ~replace_na(., median(., na.rm = TRUE)))
+  df <- df %>% mutate_if(function (x) !is.numeric(x), ~replace_na(., mfv(.)[1]))
+  sum(is.na(df))
+  return(df)
+}
+
+boxplots <- function(df){
+  j=1
+  for (col in df){
+    if (class(col)=="character"){
+      j = j + 1
+      next
+    }
+    print(class(df[,j]))
+    boxplot(col)
+    ## temp = readline()
+    j= j+1
+  }
+}
+
+remove_outliers <- function(df){
+  j = 1
+  for (col in df){
+    if (class(col)=="character"){
+      j = j + 1
+      next
+    }
+    ## temp = readline()
+    s = quantile(df[,j], c(.25,.75))
+    iqr = s[2] - s[1]
+    ul = s[2] + 1.5*iqr
+    ll = s[1] - 1.5*iqr
+    df[,j][df[,j] <= ll] = ll
+    df[,j][df[,j] >= ul] = ul
+    ## temp = readline()
+    j= j+1
+  }
+  return(df)
+}
+
+
+# Main 
+
+df <- read.csv("./movie_metadata.csv")
+df_new <- read.csv("./2017 Movie List.csv")
+
+df <- eda(df)
+## Most of the data is not normally distributed
+## Replacing numeric with median and categorical with mode
+df <- delete_nans(df)
+boxplots(df)
+df <- remove_outliers(df)
+boxplots(df)
+
+# 2017 data sample:
+
+df_new <- eda(df_new)
+df_new <- delete_nans(df_new)
+boxplots(df_new)
+df_new <- remove_outliers(df_new)
+boxplots(df_new)
+
+
+
+pop_mean = mean(df$imdb_score)
+x_bar = mean(df_new$IMDb.Rating)
+n = length(df_new$IMDb.Rating)
+
+## Population Standard deviation is known
+sigma = sd(df$imdb_score)
+z = (x_bar - pop_mean)/(sigma/sqrt(n))
+pvalue = pnorm(z)
+print(paste0("Null Hypothesis: Mu=", pop_mean))
+print(paste0("Alternate Hypothesis: Mu>=", pop_mean))
+print(paste0("P value: ", pvalue))
+print("At 90% Confidence level")
+if(pvalue>0.1){
+  print("We cannot reject the null hypothesis")
+  print("We cannot say that popularity increases")
+}else{
+  print("We can reject the null hypothesis")
+  print("We can say that popularity increases")
+}
+
+
+## Population Standard deviation is unknown
+s = sd(df_new$IMDb.Rating)
+z = (x_bar - pop_mean)/(s/sqrt(n))
+pvalue = pnorm(z)
+print(paste0("Null Hypothesis: Mu=", pop_mean))
+print(paste0("Alternate Hypothesis: Mu>=", pop_mean))
+print(paste0("P value: ", pvalue))
+print("At 90% Confidence level")
+if(pvalue>0.1){
+  print("We cannot reject the null hypothesis")
+  print("We cannot say that popularity increases")
+}else{
+  print("We can reject the null hypothesis")
+  print("We can say that popularity increases")
+}
