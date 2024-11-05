@@ -9,4 +9,4 @@
 - **Outcome**: Derived statistically significant insights on IMDb ratings, concluding increased popularity at a 90% confidence level when population variance was unknown.
 
 
--- For further information refer to the (Project_G13.pdf)[https://github.com/Ashraf-mE/IDA-Project/blob/main/Project_G13.pdf].
+*[For further information, refer to Project_G13.pdf](https://github.com/Ashraf-mE/IDA-Project/blob/main/Project_G13.pdf).*
